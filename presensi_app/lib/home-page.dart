@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:presensi_app/models/home-response.dart';
 import 'package:presensi_app/save-page.dart';
+import 'package:presensi_app/login-page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as MyHttp;
 
@@ -32,6 +33,7 @@ class _HomePageState extends State<HomePage> {
     _name = _prefs.then((SharedPreferences prefs) {
       return prefs.getString("name") ?? "";
     });
+
   }
 
   Future getData() async {
@@ -54,7 +56,40 @@ class _HomePageState extends State<HomePage> {
       }
     });
 
-    // print('DATA: ' + response.body);
+    print('DATA: ' + response.body);
+  }
+
+  Future<void> logout() async {
+    final SharedPreferences prefs = await _prefs;
+    String? token = prefs.getString("token");
+
+    if (token != null && token.isNotEmpty) {
+      var response = await MyHttp.post(
+        Uri.parse("http://10.0.2.2:8000/api/logout"),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print(response.body);
+
+      if (response.statusCode == 200) {
+        // Hapus token & pastikan UI diperbarui
+        await prefs.clear();
+        setState(() {});
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => LoginPage()),
+          (route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Gagal logout, coba lagi")));
+      }
+    }
   }
 
   @override
@@ -158,6 +193,23 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        ElevatedButton(
+                          child: Text("Logout"),
+                          onPressed: () {
+                            logout();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            textStyle: TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20),
                     Text("Riwayat Presensi"),
                     Expanded(
                       child: ListView.builder(
@@ -169,7 +221,7 @@ class _HomePageState extends State<HomePage> {
                                   riwayat[index].tanggal.isNotEmpty
                                       ? riwayat[index].tanggal
                                       : '-',
-                                  style: TextStyle(fontSize: 10),
+                                  style: TextStyle(fontSize: 9),
                                 ),
                                 title: Row(
                                   children: [

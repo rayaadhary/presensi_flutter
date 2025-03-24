@@ -38,42 +38,56 @@ class _LoginPageState extends State<LoginPage> {
   checkToken(token, name) async {
     String tokenStr = await token;
     String nameStr = await name;
-    if (tokenStr != "" && nameStr != "") {
-      Future.delayed(Duration(seconds: 1), () async {
-        Navigator.of(context)
-            .push(MaterialPageRoute(builder: (context) => HomePage()))
-            .then((value) {
-              setState(() {});
-            });
-      });
+
+    if (tokenStr.isNotEmpty && nameStr.isNotEmpty) {
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (context) => HomePage()));
     }
   }
 
-  Future login(email, password) async {
-    LoginResponseModel? loginResponseModel;
+  Future login(String email, String password) async {
+    try {
+      Map<String, String> body = {"email": email, "password": password};
 
-    Map<String, String> body = {"email": email, "password": password};
-
-    // final headers = {
-    //   'Content-Type' : 'application/json',
-    // };
-
-    var response = await MyHttp.post(
-      Uri.parse("http://10.0.2.2:8000/api/login"),
-      body: json.encode(body),
-    );
-
-    if (response.statusCode == 401) {
-    } else {
-      loginResponseModel = LoginResponseModel.fromJson(
-        json.decode(response.body),
+      var response = await MyHttp.post(
+        Uri.parse("http://10.0.2.2:8000/api/login"),
+        body: body,
       );
-      saveUser(loginResponseModel.data.token, loginResponseModel.data.name);
-      // print("HASIL: ${response.body}");
+
+      print("Response Code: ${response.statusCode}");
+      print("Response Body: ${response.body}");
+
+      if (response.statusCode == 200) {
+        // Jika login berhasil
+        LoginResponseModel loginResponseModel = LoginResponseModel.fromJson(
+          json.decode(response.body),
+        );
+
+        await saveUser(
+          loginResponseModel.data.token,
+          loginResponseModel.data.name,
+        );
+      } else if (response.statusCode == 401) {
+        // Jika email atau password salah
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Email atau Password Salah!")));
+      } else {
+        // Jika terjadi kesalahan lain
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Terjadi kesalahan, coba lagi!")),
+        );
+      }
+    } catch (e) {
+      print("Exception: $e");
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Terjadi kesalahan jaringan!")));
     }
   }
 
-  Future saveUser(token, name) async {
+  Future saveUser(String token, String name) async {
     try {
       final SharedPreferences prefs = await _prefs;
       prefs.setString("name", name);
@@ -85,9 +99,9 @@ class _LoginPageState extends State<LoginPage> {
         setState(() {});
       });
     } catch (err) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Email atau Password Salah!")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Terjadi kesalahan saat menyimpan data!")),
+      );
     }
   }
 

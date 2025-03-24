@@ -57,12 +57,15 @@ class AuthController extends Controller
     }
 
     // method for user logout and delete token
-    public function logout()
+    public function logout(Request $request)
     {
-        auth()->user()->tokens()->delete();
-
-        return [
-            'message' => 'You have successfully logged out and the token was successfully deleted'
-        ];
+        // $request->user()->tokens()->delete();
+        $request->user()->currentAccessToken()->delete();
+    
+        return response()->json([
+            'success' => true,
+            'message' => 'Anda telah berhasil logout, token telah dihapus'
+        ]);
     }
+    
 }
