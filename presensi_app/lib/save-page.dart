@@ -3,7 +3,6 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
-import 'package:presensi_app/models/save-presensi-response.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_maps/maps.dart';
 import 'package:http/http.dart' as MyHttp;
@@ -75,6 +74,14 @@ class _SavePageState extends State<SavePage> {
 
   Future<void> savePresensi(latitude, longitude) async {
     try {
+      // Cek jam saat ini sebelum menyimpan presensi
+      if (!_isValidTime()) {
+        _showAlert(
+          "Presensi hanya dapat dilakukan 15 menit sebelum jam 07:00 dan setelah 14:30.",
+        );
+        return;
+      }
+
       Map<String, dynamic> body = {
         "latitude": latitude.toString(),
         "longitude": longitude.toString(),
@@ -122,6 +129,23 @@ class _SavePageState extends State<SavePage> {
     }
   }
 
+  bool _isValidTime() {
+    final now = DateTime.now();
+    final before7AM = DateTime(now.year, now.month, now.day, 6, 45); // 06:45
+    final at7AM = DateTime(now.year, now.month, now.day, 7, 0); // 07:00
+    final after2PM = DateTime(now.year, now.month, now.day, 14, 30); // 14:30
+    final at3PM = DateTime(now.year, now.month, now.day, 15, 0); // 15:00
+
+    return (now.isAfter(before7AM) && now.isBefore(at7AM)) ||
+        (now.isAfter(after2PM) && now.isBefore(at3PM));
+  }
+
+  void _showAlert(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -129,9 +153,10 @@ class _SavePageState extends State<SavePage> {
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pop(context); // Kembali ke halaman sebelumnya
+            Navigator.pop(context);
           },
         ),
+        title: Text("Home"),
       ),
       body: FutureBuilder<LocationData?>(
         future: _currentLocation(),
@@ -162,10 +187,8 @@ class _SavePageState extends State<SavePage> {
                           initialZoomLevel: 15,
                           urlTemplate:
                               "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-                          // Tambahkan dua marker
                           markerBuilder: (BuildContext context, int index) {
                             if (index == 0) {
-                              // Marker untuk lokasi pengguna
                               return MapMarker(
                                 latitude: currentLocation.latitude!,
                                 longitude: currentLocation.longitude!,
@@ -176,7 +199,6 @@ class _SavePageState extends State<SavePage> {
                                 ),
                               );
                             } else {
-                              // Marker untuk lokasi kantor
                               return MapMarker(
                                 latitude: officeLatitude,
                                 longitude: officeLongitude,
@@ -188,7 +210,7 @@ class _SavePageState extends State<SavePage> {
                               );
                             }
                           },
-                          initialMarkersCount: 2, // Pastikan jumlah marker = 2
+                          initialMarkersCount: 2,
                         ),
                       ],
                     ),
@@ -205,15 +227,12 @@ class _SavePageState extends State<SavePage> {
                   SizedBox(height: 10),
                   ElevatedButton(
                     child: Text("Save"),
-                    onPressed:
-                        distance <= radiusInMeters
-                            ? () {
-                              savePresensi(
-                                currentLocation.latitude,
-                                currentLocation.longitude,
-                              );
-                            }
-                            : null, // Disabled jika jarak lebih dari radius
+                    onPressed: () {
+                      savePresensi(
+                        currentLocation.latitude,
+                        currentLocation.longitude,
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       foregroundColor: Colors.white,

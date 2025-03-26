@@ -17,6 +17,7 @@ class _LoginPageState extends State<LoginPage> {
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+  bool _isObscure = true;
   late Future<String> _token, _name;
 
   @override
@@ -109,33 +110,115 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Center(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Center(child: Text('LOGIN')),
-                SizedBox(height: 20),
-                Text('EMAIL'),
-                TextField(controller: emailController),
-                SizedBox(height: 20),
-                Text('PASSWORD'),
-                TextField(controller: passwordController, obscureText: true),
-                SizedBox(height: 20),
+                // Logo
+                SizedBox(height: 30), // Jarak atas biar tidak terlalu mepet
                 Center(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      login(emailController.text, passwordController.text);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: Text('MASUK'),
+                  child: Image.asset('assets/images/logo_rs.png', width: 150),
+                ),
+                SizedBox(height: 20),
+
+                // Form Login dalam Container agar tidak kepanjangan
+                Container(
+                  width: double.infinity,
+                  constraints: BoxConstraints(
+                    maxWidth: 250,
+                  ), // Batasi lebar maksimum
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Email TextField
+                      TextField(
+                        controller: emailController,
+                        decoration: InputDecoration(
+                          hintText: 'Masukkan email',
+                          hintStyle: TextStyle(
+                            color: Colors.grey[400],
+                          ), // Placeholder lebih redup
+                          prefixIcon: Icon(Icons.email, color: Colors.grey),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                              20,
+                            ), // Border lebih halus
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 10),
+
+                      // Password TextField
+                      TextField(
+                        controller: passwordController,
+                        obscureText: _isObscure,
+                        decoration: InputDecoration(
+                          hintText: 'Masukkan password',
+                          hintStyle: TextStyle(
+                            color: Colors.grey[400],
+                          ), // Placeholder lebih redup
+                          prefixIcon: Icon(Icons.lock, color: Colors.grey),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _isObscure
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                              color: Colors.grey,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _isObscure = !_isObscure;
+                              });
+                            },
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(
+                              20,
+                            ), // Border lebih halus
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 20),
+
+                      // Tombol Login (Lebar Sama dengan TextField)
+                      SizedBox(
+                        width: double.infinity, // Lebarkan tombol
+                        child: ElevatedButton(
+                          onPressed: () {
+                            login(
+                              emailController.text,
+                              passwordController.text,
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green,
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(
+                              vertical:
+                                  14, // Tambah tinggi tombol agar proporsional
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                20,
+                              ), // Sesuai border textfield
+                            ),
+                          ),
+                          child: Text(
+                            'LOGIN',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                SizedBox(height: 40), // Jarak bawah agar tidak terlalu mepet
               ],
             ),
           ),

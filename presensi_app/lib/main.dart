@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:presensi_app/login-page.dart';
+import 'package:presensi_app/services/notification-service.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  tz.initializeTimeZones();
+
+  await NotificationService.init();
+
   runApp(MyApp());
 }
 
@@ -13,4 +21,3 @@ class MyApp extends StatelessWidget {
     return MaterialApp(home: LoginPage());
   }
 }
-
